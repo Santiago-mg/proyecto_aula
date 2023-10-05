@@ -50,7 +50,8 @@ class perfil:
         self.saldo_pagado: int = 0
         self.cuotas: int = 0
         self.cuotainicial: int = 0
-        self.fecha_ultimacuota = 0
+        self.mora: int = 0
+        self.fecha_ultimacuota = datetime
     
     def cuota_inicial(self, tipo_prestamo, cant_cuotas):
         self.cuotas += 1
@@ -66,23 +67,25 @@ class perfil:
             resultado += self.cantidad * 0.03
             self.cuotainicial= resultado
             print( "El total de tu cuota inicial es:", resultado)
-        capital= int(input("ingrese la cantidad de capital que va a depositar\n"))
-        self.saldo_pagado += capital
+            capital= int(input("ingrese la cantidad de capital que va a depositar\n"))
+            self.saldo_pagado += capital
 
     
-    def cuota_corriente(self, cant_cuotas, tipo_prestamo)-> int:
-        capital= int(input("ingrese la cantidad de capital que va a depositar\n"))
+    def cuota_corriente(self, cant_cuotas, tipo_prestamo, capital: int)-> int:
         self.saldo += capital
         self.cuotas += 1
         resultado = self.cantidad - self.cuotainicial
         resultado = resultado / cant_cuotas
         if tipo_prestamo == 1:
-            resultado += self.cantidad * 0.05
+            resultado += self.cantidad * 0.05 + self.mora
             return resultado
             
         else:
-            resultado += self.cantidad * 0.03
+            resultado += self.cantidad * 0.03 + self.mora
             return resultado
+    def __str__(self):        
+        return f"nombre: {self.nombre}, profesion:{self.profesion}, edad:{self.edad}, cantidad: {self.cantidad}, su saldo pagado es:{self.saldo_pagado}, el # de cuotas es:{self.cuotas}, su mora acumulada es: {self.mora}, la fecha de su ultima cuota pagada es: {self.fecha_ultimacuota} "
+                
 
 def prestamo_finalizado(perfil) -> bool:
     if perfil.cantidad == perfil.saldo_pagado:
@@ -102,16 +105,17 @@ class propietario:
     def recarga(self):
         incremento = int(input("Cuanto desea recargar en su saldo"))
         self.saldo += incremento
-    def notificacion(self, lista:list, lista2: list)-> bool:
+    def notificacion(self, lista:list,)-> bool:
         if len(lista) > 0:
             print("Tiene nuevos aspitrantes a prestamos")
             for i in lista:
                 print(i)
                 elecccion = input("Desea conceder el prestamo? s/n\n")
                 if elecccion == "s":
-                    lista2.append(i)                                        
+                    lista.remove(i)
                     return True                
-                else:                                        
+                else:
+                    lista.remove(i)                    
                     return False
                 
                 
@@ -119,10 +123,8 @@ def obtener_fecha_actual():
     fecha_actual = datetime.date.today()
     return fecha_actual
 
-def intereses_mora(perfil):
-    mora = perfil.cuota_corriente(cant_cuotas, tipo_prestamo)
-    mora = mora + 0.01
-    
+def intereses_mora(perfil):    
+    perfil.mora += 0.01    
     print("usted ha pagado menos de lo acordado, se han subito los intereses un 0.01% ")
         
      
@@ -142,12 +144,16 @@ print("""
                                                                                                                                                                                                     
 """)
 fin = False
+validacion = False
+persona1 = nuevo_usuario()
 while not fin:
     jefe = propietario()
-    validacion = False
     persona = input("ingrese nombre de usuario\n")
-    if persona== "f834ur834u9843ujo":
-        validacion = jefe.notificacion(ofreciminetos, clientes)
+    if persona == "f834ur834u9843ujo":
+        validacion = jefe.notificacion(ofreciminetos)
+        if validacion:
+            cliente1= perfil(persona1.nombre, persona1.profesion, persona1.edad )
+            perfiles.append(cliente1)
         if input("desea saber el curriculum de todos sus clientes s/n?") == "s":
             jefe.curriculum(perfiles)
         if input("Desea recarcar efectivo en su cuenta s/n?") == "s":
@@ -158,7 +164,7 @@ while not fin:
             print("ingrese numero valido ")
         
         if opciones == "1":
-            if persona in clientes and validacion:
+            if persona in clientes and validacion :
                 print("Usted ya tiene un prestamo vigente")
             else:
                 prestamo_valido = False
@@ -168,58 +174,51 @@ while not fin:
                         print("Debe realizar prestamos por enima de 4 millones")
                     else:
                         prestamo_valido = True
-                nuevo_usuario.monto = cantidad
-                if persona not in clientes:
-                    clientes.append(persona)
-                    persona1 = clientes.index(persona)
-                    persona1 = nuevo_usuario()
-                    persona1.monto = cantidad
-                    persona1.informacion()                
-                    ofreciminetos.append(persona1)
-                    print("Su informacion ha sido enviada")
-                if validacion:                    
-                    persona1.cantidad = cantidad
-                    if cantidad >= 4000000 and cantidad <= 55000000:
-                        tipo_prestamo = 1                
-                    else:
-                        tipo_prestamo = 2                
+                clientes.append(persona)
+                persona1 = clientes.index(persona)
+                persona1 = nuevo_usuario()
+                persona1.monto = cantidad
+                persona1.informacion()                
+                ofreciminetos.append(persona1)
+                print("Su informacion ha sido enviada")                                    
+                persona1.cantidad = cantidad
+                if cantidad >= 4000000 and cantidad <= 55000000:
+                    tipo_prestamo = 1                
                 else:
-                    print("su prestamo esta en revision")
+                    tipo_prestamo = 2                
+                
+                print("su prestamo esta en revision")
                 
         elif opciones == "2":
             if persona not in clientes:
                 print("Usted es un usuario nuevo, no tiene prestamos vijentes")
-                clientes.append(persona)
-                persona1 = clientes.index(persona)
-                persona1 = nuevo_usuario()
+                validacion = False
+                clientes.append(persona)                
                 ofreciminetos.append(persona1)
                 persona1.informacion()
                 print("Su informacion ha sido enviada")
             
             elif validacion:
                 print("su prestamo ha sido validado")
-                cliente1 = perfil(persona1.nombre, persona1.profesion, persona1.edad,)
                 cliente1.cantidad = persona1.monto
-                perfiles.append(cliente1)
                 if cliente1.cantidad == 0:
                     print("usted no tiene prestamos vijentes")
                 else:
-                    cant_cuotas = int(input("A cuantas cuotas desea pagar su prestamo?\n"))
+                    if cliente1.cuotas == 0:                        
+                        cant_cuotas = int(input("A cuantas cuotas desea pagar su prestamo?\n"))
                     if cliente1.cuotas == 0:
                         print("Debe de realizar el pago de la cuota inicial")
                         print("recuerde que la cuota inicial debe ser el 30% del prestamo mas los intereses")
                         cliente1.cuota_inicial(tipo_prestamo, cant_cuotas)
                         cliente1.fecha_ultimacuota = obtener_fecha_actual()
-                    else:                    
-                        cliente1.cuota_corriente(cant_cuotas, tipo_prestamo)
+                    else:
+                        capital= int(input("ingrese la cantidad de capital que va a depositar\n"))
+                        if cliente1.cuota_corriente(cant_cuotas, tipo_prestamo, capital) > capital:
+                            intereses_mora(cliente1)
                         cliente1.fecha_ultimacuota = obtener_fecha_actual()
         
             elif not validacion:
                 print("su prestamo esta en revision")
-            
-        
-            if not prestamo_finalizado(cliente1):        
-                print("Su deuda ha sido pagada")
         
 
 
